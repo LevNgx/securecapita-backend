@@ -47,9 +47,6 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(configure -> configure.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))
-                .exceptionHandling(exception ->
-                        exception.accessDeniedHandler(customAccessDeniedHandler)
-                                .authenticationEntryPoint(customAuthenticationEntryPoint))
                 .authorizeHttpRequests(request ->
                         request.requestMatchers(PUBLIC_URLS).permitAll()
                                 .requestMatchers(OPTIONS).permitAll()
@@ -57,7 +54,10 @@ public class SecurityConfig {
                                 .hasAnyAuthority("DELETE:USER")
                                 .requestMatchers(DELETE, "/customer/delete/**")
                                 .hasAnyAuthority("DELETE:CUSTOMER")
-                                .anyRequest().authenticated());
+                                .anyRequest().authenticated())
+                .exceptionHandling(exception ->
+                        exception.accessDeniedHandler(customAccessDeniedHandler)
+                                .authenticationEntryPoint(customAuthenticationEntryPoint));
         return http.build();
     }
 

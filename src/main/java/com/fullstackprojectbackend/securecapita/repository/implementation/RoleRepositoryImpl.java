@@ -14,8 +14,7 @@ import java.util.Collection;
 import java.util.Map;
 
 import static com.fullstackprojectbackend.securecapita.enumeration.RoleType.ROLE_USER;
-import static com.fullstackprojectbackend.securecapita.query.RoleQuery.INSERT_ROLE_TO_USER_QUERY;
-import static com.fullstackprojectbackend.securecapita.query.RoleQuery.SELECT_ROLE_BY_NAME_QUERY;
+import static com.fullstackprojectbackend.securecapita.query.RoleQuery.*;
 
 @Repository
 @RequiredArgsConstructor
@@ -66,7 +65,19 @@ public class RoleRepositoryImpl implements RoleRepository<Role> {
 
     @Override
     public Role getRoleByUserId(long userId) {
-        return null;
+        try{
+            Role role = jdbc.queryForObject(FETCH_ROLE_ID_FROM_USER_ROLES_BY_USER_ID_QUERY, Map.of("userId",userId), new RoleRowMapper());
+            System.out.println(role + "role");
+            return role;
+        }
+        catch (EmptyResultDataAccessException e){
+            log.error(e.getMessage());
+            throw new ApiException("not able to find a role by the user id " + userId);
+        }
+        catch (Exception e){
+            log.error(e.getMessage());
+            throw new ApiException("something went wrong");
+        }
     }
 
     @Override

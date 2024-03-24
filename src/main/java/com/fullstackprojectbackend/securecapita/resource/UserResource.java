@@ -4,9 +4,11 @@ import com.fullstackprojectbackend.securecapita.domain.HttpResponse;
 import com.fullstackprojectbackend.securecapita.domain.User;
 import com.fullstackprojectbackend.securecapita.dto.UserDTO;
 import com.fullstackprojectbackend.securecapita.form.LoginForm;
+import com.fullstackprojectbackend.securecapita.repository.exception.ApiException;
 import com.fullstackprojectbackend.securecapita.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -26,6 +28,7 @@ import static java.util.Map.of;
 @RestController
 @RequestMapping(path = "/user")
 @RequiredArgsConstructor
+@Slf4j
 public class UserResource {
 
     private final UserService userService;
@@ -33,16 +36,26 @@ public class UserResource {
 
     @PostMapping("/login")
     public ResponseEntity<HttpResponse> login(@RequestBody @Valid LoginForm loginForm) {
-        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginForm.getEmail(),loginForm.getPassword()));
-        UserDTO userDto = userService.getUserByEmail(loginForm.getEmail());
-        return ResponseEntity.ok().body(
-            HttpResponse.builder()
-                    .message("login attempted")
-                    .reason("login attempted")
-                    .statusCode(HttpStatus.OK.value())
-                    .data(Map.of("user",userDto))
-                    .build()
-        );
+        try{
+            System.out.println(loginForm.getEmail() + " " + loginForm.getPassword());
+            authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginForm.getEmail(),loginForm.getPassword()));
+            System.out.println("authenticated");
+            UserDTO userDto = userService.getUserByEmail(loginForm.getEmail());
+            System.out.println("user DTO" + userDto);
+            return ResponseEntity.ok().body(
+                    HttpResponse.builder()
+                            .message("login attempted")
+                            .reason("login attempted")
+                            .statusCode(HttpStatus.OK.value())
+                            .data(Map.of("user",userDto))
+                            .build()
+            );
+        }
+        catch (Exception e){
+            log.error(e.getMessage());
+            throw new ApiException(e.getMessage());
+        }
+
     }
 
     @PostMapping("/register")
