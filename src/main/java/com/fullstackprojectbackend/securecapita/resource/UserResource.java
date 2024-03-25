@@ -2,9 +2,12 @@ package com.fullstackprojectbackend.securecapita.resource;
 
 import com.fullstackprojectbackend.securecapita.domain.HttpResponse;
 import com.fullstackprojectbackend.securecapita.domain.User;
+import com.fullstackprojectbackend.securecapita.domain.UserPrincipal;
 import com.fullstackprojectbackend.securecapita.dto.UserDTO;
 import com.fullstackprojectbackend.securecapita.form.LoginForm;
+import com.fullstackprojectbackend.securecapita.provider.TokenProvider;
 import com.fullstackprojectbackend.securecapita.repository.exception.ApiException;
+import com.fullstackprojectbackend.securecapita.service.RoleService;
 import com.fullstackprojectbackend.securecapita.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -13,10 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
@@ -33,6 +33,8 @@ public class UserResource {
 
     private final UserService userService;
     private final AuthenticationManager authenticationManager;
+    private final TokenProvider tokenProvider;
+    private final RoleService roleService;
 
     @PostMapping("/login")
     public ResponseEntity<HttpResponse> login(@RequestBody @Valid LoginForm loginForm) {
@@ -42,14 +44,8 @@ public class UserResource {
             System.out.println("authenticated");
             UserDTO userDto = userService.getUserByEmail(loginForm.getEmail());
             System.out.println("user DTO" + userDto);
-            return ResponseEntity.ok().body(
-                    HttpResponse.builder()
-                            .message("login attempted")
-                            .reason("login attempted")
-                            .statusCode(HttpStatus.OK.value())
-                            .data(Map.of("user",userDto))
-                            .build()
-            );
+            return userDto.getMfaEnabled() ? sendVerificationCode(userDto) : sendResponse(userDto);
+
         }
         catch (Exception e){
             log.error(e.getMessage());
@@ -57,6 +53,8 @@ public class UserResource {
         }
 
     }
+
+
 
     @PostMapping("/register")
     public ResponseEntity<HttpResponse> saveUser(@RequestBody @Valid User user){
@@ -72,9 +70,49 @@ public class UserResource {
                         .build());
     }
 
+    @GetMapping("/verify/code/{email}/{code}")
+    public ResponseEntity<HttpResponse> verifyCode(@PathVariable("email") String email, @PathVariable("code") String code ){
+        UserDTO userDto = userService.verifyCode(email, code);
+        return ResponseEntity.ok().body(
+                HttpResponse.builder()
+                        .message("login attempted")
+                        .reason("login attempted")
+                        .statusCode(HttpStatus.OK.value())
+                        .data(Map.of("user",userDto
+                                , "access_token", tokenProvider.createAccessToken(getUserPrincipal(userDto))
+                                , "refresh_token", tokenProvider.createRefreshToken(getUserPrincipal(userDto))))
+                        .build());
+    }
+
     private URI getUri(){
         System.out.println("Uri surgical strike" + URI.create(ServletUriComponentsBuilder.fromCurrentContextPath().path("/user/get/<userId>").toUriString()));
         return URI.create(ServletUriComponentsBuilder.fromCurrentContextPath().path("/user/get/<userId>").toUriString());
+    }
+
+    private ResponseEntity<HttpResponse> sendResponse(UserDTO userDto) {
+        return ResponseEntity.ok().body(
+                HttpResponse.builder()
+                        .message("login attempted")
+                        .reason("login attempted")
+                        .statusCode(HttpStatus.OK.value())
+                        .data(Map.of("user",userDto
+                                , "access_token", tokenProvider.createAccessToken(getUserPrincipal(userDto))
+                                , "refresh_token", tokenProvider.createRefreshToken(getUserPrincipal(userDto))))
+                        .build());
+    }
+
+    private UserPrincipal getUserPrincipal(UserDTO userDto) {
+        return new UserPrincipal(userService.getUser(userDto.getEmail()), roleService.getRoleByUserId(userDto.getId()));
+    }
+
+    private ResponseEntity<HttpResponse> sendVerificationCode(UserDTO userDto) {
+        userService.sendVerficationCode(userDto);
+        return ResponseEntity.ok().body(
+                HttpResponse.builder()
+                        .message("Verification code sent")
+                        .statusCode(HttpStatus.OK.value())
+                        .data(Map.of("user",userDto))
+                        .build());
     }
 
 

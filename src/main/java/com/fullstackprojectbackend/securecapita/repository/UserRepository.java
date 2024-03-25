@@ -1,6 +1,7 @@
 package com.fullstackprojectbackend.securecapita.repository;
 
 import com.fullstackprojectbackend.securecapita.domain.User;
+import com.fullstackprojectbackend.securecapita.dto.UserDTO;
 
 import java.util.Collection;
 
@@ -14,4 +15,8 @@ public interface UserRepository <T extends User>{
     T update(T data);
 
     User getUserByEmail(String email);
+
+    void sendVerficationCode(UserDTO userDto);
+
+    T verifyCode(String email, String code);
 }

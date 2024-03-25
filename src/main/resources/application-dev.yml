@@ -1,3 +1,5 @@
+jwt:
+  secret: myultimatecomplexsecret
 spring:
   datasource:
     url: jdbc:mysql://127.0.0.1:3306/hospitalia
@@ -16,6 +18,6 @@ spring:
         format_sql: true
   sql:
     init:
-      mode: always
+#      mode: always
       continue-on-error: false
   

@@ -7,4 +7,10 @@ public interface UserService {
     UserDTO createUser(User user);
 
     UserDTO getUserByEmail(String email);
+
+    void sendVerficationCode(UserDTO userDto);
+
+    User getUser(String email);
+
+    UserDTO verifyCode(String email, String code);
 }

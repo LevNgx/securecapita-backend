@@ -3,12 +3,14 @@ package com.fullstackprojectbackend.securecapita.repository.implementation;
 import com.fullstackprojectbackend.securecapita.domain.Role;
 import com.fullstackprojectbackend.securecapita.domain.User;
 import com.fullstackprojectbackend.securecapita.domain.UserPrincipal;
+import com.fullstackprojectbackend.securecapita.dto.UserDTO;
 import com.fullstackprojectbackend.securecapita.repository.RoleRepository;
 import com.fullstackprojectbackend.securecapita.repository.UserRepository;
 import com.fullstackprojectbackend.securecapita.repository.exception.ApiException;
 import com.fullstackprojectbackend.securecapita.repository.rowmapper.UserRowMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.time.DateFormatUtils;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -22,15 +24,16 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import java.util.Collection;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 
 import static com.fullstackprojectbackend.securecapita.enumeration.RoleType.ROLE_USER;
 import static com.fullstackprojectbackend.securecapita.enumeration.VerificationType.ACCOUNT;
 import static com.fullstackprojectbackend.securecapita.query.UserQuery.*;
+import static com.fullstackprojectbackend.securecapita.utils.SmsUtils.sendSMS;
 import static java.util.Map.of;
+import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
+import static org.apache.commons.lang3.time.DateUtils.addDays;
+
 
 @Repository
 @RequiredArgsConstructor
@@ -38,6 +41,7 @@ import static java.util.Map.of;
 public class UserRepoImpl implements UserRepository<User> , UserDetailsService {
 
 
+    private static final String DATE_FORMAT = "yyyy-MM-dd hh:mm:ss";
     private final NamedParameterJdbcTemplate jdbc;
 
     private final RoleRepository<Role> roleRepository;
@@ -143,6 +147,63 @@ public class UserRepoImpl implements UserRepository<User> , UserDetailsService {
         } catch (Exception exception) {
             log.error(exception.getMessage());
             throw new ApiException("An error occurred. Please try again.");
+        }
+    }
+
+    @Override
+    public void sendVerficationCode(UserDTO userDto) {
+
+        String expirationDate = DateFormatUtils.format(addDays(new Date(), 1), DATE_FORMAT);
+        String verificationCode = randomAlphabetic(8).toUpperCase();
+        log.info("Verification code" + verificationCode);
+
+        try {
+            jdbc.update(DELETE_VERIFICATION_CODE_BY_USER_ID, of("id", userDto.getId()));
+            jdbc.update(INSERT_VERIFICATION_CODE_QUERY, of("id", userDto.getId(), "code", verificationCode, "expDate", expirationDate));
+//            sendSMS(userDto.getPhone(), "From: SecureCapita \nVerification code\n" + verificationCode);
+        }  catch (Exception exception) {
+            log.error(exception.getMessage());
+            throw new ApiException("An error occurred. Please try again.");
+        }
+
+    }
+
+    @Override
+    public User verifyCode(String email, String code) {
+        if(isVerificationCodeExpired(email, code)) throw new ApiException("provided code is expired. Please login again");
+        try{
+            User userByCode = jdbc.queryForObject(SELECT_USER_BY_USER_CODE_QUERY, of("code", code), new UserRowMapper());
+            User userByEmail = jdbc.queryForObject(SELECT_USER_BY_EMAIL_QUERY, of("email", email), new UserRowMapper());
+            if(userByCode.getEmail().equalsIgnoreCase(userByEmail.getEmail())){
+                jdbc.update(DELETE_VERIFICATION_CODE_BY_USER_ID_AND_CODE, of("userId", userByCode.getId(), "code", code));
+                return userByCode;
+            } else {
+                throw new ApiException("Code is invalid. Please try again");
+            }
+        }
+        catch(EmptyResultDataAccessException exception){
+            log.error(exception.getMessage());
+            throw new ApiException("no user found with the given data.");
+
+        }
+        catch(Exception e){
+            log.error(e.getMessage());
+            throw new ApiException("An error occurred.");
+        }
+
+    }
+
+    private boolean isVerificationCodeExpired(String email, String code) {
+        try{
+            return Boolean.TRUE.equals(jdbc.queryForObject(SELECT_CODE_EXPIRATION_QUERY, of("code", code, "userId", getUserByEmail(email).getId()), Boolean.class));
+        }
+        catch (EmptyResultDataAccessException e){
+            log.error(e.getMessage());
+            throw new ApiException("No user found with the provided verification code.");
+        }
+        catch (Exception e){
+            log.error(e.getMessage());
+            throw new ApiException("An error occurred");
         }
     }
 }
