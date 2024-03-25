@@ -7,10 +7,10 @@ import com.twilio.type.PhoneNumber;
 import static com.twilio.rest.api.v2010.account.Message.creator;
 
 public class SmsUtils {
-    public static final String FROM_NUMBER = "+12406964145";
-//    AC193e6c49d0435d74dc07090937df9bd5
+    public static final String FROM_NUMBER = "";
+
     public static final String SID_KEY = "";
-//    f237d7cf6bfc2a511f0cf1fd5d0d8a8b
+
     public static final String TOKEN_KEY = "";
 
     public static void sendSMS(String to, String messageBody){
