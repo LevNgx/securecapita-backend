@@ -1,5 +1,9 @@
 .idea/
 target/
+target/classes/**/*
+target/classes/**/*
+target/test-classes/**/*
+target/test-classes/**
 .idea/compiler.xml
 .idea/encodings.xml
 .idea/jarRepositories.xml

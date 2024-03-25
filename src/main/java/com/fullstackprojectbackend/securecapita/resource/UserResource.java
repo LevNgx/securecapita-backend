@@ -16,6 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -55,7 +56,19 @@ public class UserResource {
     }
 
 
-
+    @GetMapping("/profile")
+    public ResponseEntity<HttpResponse> profile(Authentication authentication){
+        UserDTO userDTO = userService.getUserByEmail(authentication.getName());
+        System.out.println(authentication);
+        return ResponseEntity.created(getUri()).body(
+                HttpResponse.builder()
+                        .timeStamp(now().toString())
+                        .data(of("user",userDTO))
+                        .message("user created")
+                        .status(HttpStatus.CREATED)
+                        .statusCode(HttpStatus.CREATED.value())
+                        .build());
+    }
     @PostMapping("/register")
     public ResponseEntity<HttpResponse> saveUser(@RequestBody @Valid User user){
         UserDTO userDTO = userService.createUser(user);

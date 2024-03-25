@@ -1,5 +1,6 @@
 package com.fullstackprojectbackend.securecapita.configuration;
 
+import com.fullstackprojectbackend.securecapita.filter.CustomAuthorizationFilter;
 import com.fullstackprojectbackend.securecapita.handler.CustomAccessDeniedHandler;
 import com.fullstackprojectbackend.securecapita.handler.CustomAuthenticationEntryPoint;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +41,8 @@ public class SecurityConfig {
     private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
     private final UserDetailsService userDetailsService;
 
+    private final CustomAuthorizationFilter customAuthorizationFilter;
+
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -47,6 +50,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(configure -> configure.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))
+                .addFilterBefore(customAuthorizationFilter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(request ->
                         request.requestMatchers(PUBLIC_URLS).permitAll()
                                 .requestMatchers(OPTIONS).permitAll()
