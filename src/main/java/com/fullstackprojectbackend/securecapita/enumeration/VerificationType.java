@@ -12,7 +12,7 @@ public enum VerificationType {
     }
 
     public String getType(){
-        return this.type;
+        return this.type.toLowerCase();
     }
 
 

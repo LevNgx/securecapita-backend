@@ -52,6 +52,6 @@ public class UserPrincipal implements UserDetails {
     }
 
     public UserDTO getUser() {
-        return fromUser(user);
+        return fromUser(user, role);
     }
 }

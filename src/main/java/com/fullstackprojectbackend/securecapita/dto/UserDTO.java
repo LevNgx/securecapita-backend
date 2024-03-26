@@ -20,4 +20,6 @@ public class UserDTO {
     private String imageUrl;
     private String title;
     private String bio;
+    private String roleName;
+    private String permissions;
 }

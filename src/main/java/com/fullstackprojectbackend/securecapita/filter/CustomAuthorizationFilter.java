@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
+import static com.fullstackprojectbackend.securecapita.utils.ExceptionUtil.processError;
 import static java.util.Arrays.asList;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.springframework.data.mapping.Alias.ofNullable;
@@ -28,7 +29,7 @@ import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 @Slf4j
 public class CustomAuthorizationFilter extends OncePerRequestFilter {
 
-    private static final String[] PUBLIC_ROUTES = {"/user/login", "user/register", "user/verify/code"};
+    private static final String[] PUBLIC_ROUTES = {"/user/login", "user/register", "user/verify/code", "user/refresh/token"};
     private final TokenProvider tokenProvider;
 
     private static final String TOKEN_KEY = "token";
@@ -39,9 +40,13 @@ public class CustomAuthorizationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         try{
             Map<String, String> values = getRequestValues(request);
+            log.info("came here" + "1");
             String token = getToken(request);
+            log.info("came here" + "2");
             if(tokenProvider.isTokenValid(values.get(EMAIL_KEY), token)){
+                log.info("came here" + "3" + values + "gap " );
                 List<GrantedAuthority> authorities = tokenProvider.getAuthorities(values.get(TOKEN_KEY));
+                log.info(authorities.toString() + "came here" + "4");
                 Authentication authentication = tokenProvider.getAuthentication(values.get(EMAIL_KEY), authorities, request);
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
@@ -52,8 +57,8 @@ public class CustomAuthorizationFilter extends OncePerRequestFilter {
 
         }
         catch (Exception e){
-            log.error(e.getMessage());
-            //processError(request, response, e);
+            log.error(e.getMessage() + "coming from here ?");
+            processError(request, response, e);
         }
     }
 

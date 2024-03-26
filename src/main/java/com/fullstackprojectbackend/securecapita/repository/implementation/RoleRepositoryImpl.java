@@ -2,7 +2,7 @@ package com.fullstackprojectbackend.securecapita.repository.implementation;
 
 import com.fullstackprojectbackend.securecapita.domain.Role;
 import com.fullstackprojectbackend.securecapita.repository.RoleRepository;
-import com.fullstackprojectbackend.securecapita.repository.exception.ApiException;
+import com.fullstackprojectbackend.securecapita.exception.ApiException;
 import com.fullstackprojectbackend.securecapita.repository.rowmapper.RoleRowMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

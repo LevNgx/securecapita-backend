@@ -1,4 +1,4 @@
-package com.fullstackprojectbackend.securecapita.repository.exception;
+package com.fullstackprojectbackend.securecapita.exception;
 
 public class ApiException extends RuntimeException{
 
