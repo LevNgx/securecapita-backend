@@ -21,4 +21,7 @@ public class UserQuery {
     public static final String FETCH_VERIFICATION_URL_COUNT_QUERY = "SELECT COUNT(*) FROM ResetPasswordVerifications WHERE url = :url";
     public static final String SELECT_USER_BY_ACCOUNT_URL_QUERY = "SELECT * FROM Users WHERE id = (SELECT user_id FROM AccountVerifications WHERE url = :url)";
     public static final String DELETE_USER_ENABLED_QUERY = "UPDATE Users SET enabled = :enabled WHERE id = :id";
+    public static final String UPDATE_USER_DETAILS_QUERY = "UPDATE Users SET first_name = :firstName,  last_name = :lastName, phone= :phone, address = :address, enabled = :enabled, email = :email, title = :title, bio = :bio WHERE id = :id";
+    public static final String GET_USER_BY_ID = "SELECT * FROM Users WHERE id = :id";
+
 }

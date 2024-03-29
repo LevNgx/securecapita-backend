@@ -89,7 +89,7 @@ public class HandleException extends ResponseEntityExceptionHandler implements E
 
     @ExceptionHandler(ApiException.class)
     public ResponseEntity<HttpResponse> apiException(ApiException exception) {
-        log.error(exception.getMessage());
+        log.error(exception.getMessage() + "here");
         return new ResponseEntity<>(
                 HttpResponse.builder()
                         .timeStamp(now().toString())

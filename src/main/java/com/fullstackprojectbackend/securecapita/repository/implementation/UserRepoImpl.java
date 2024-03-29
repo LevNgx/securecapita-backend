@@ -5,6 +5,7 @@ import com.fullstackprojectbackend.securecapita.domain.User;
 import com.fullstackprojectbackend.securecapita.domain.UserPrincipal;
 import com.fullstackprojectbackend.securecapita.dto.UserDTO;
 import com.fullstackprojectbackend.securecapita.enumeration.VerificationType;
+import com.fullstackprojectbackend.securecapita.form.UpdateForm;
 import com.fullstackprojectbackend.securecapita.repository.RoleRepository;
 import com.fullstackprojectbackend.securecapita.repository.UserRepository;
 import com.fullstackprojectbackend.securecapita.exception.ApiException;
@@ -86,8 +87,18 @@ public class UserRepoImpl implements UserRepository<User> , UserDetailsService {
 
     @Override
     public User get(Long id) {
-        // TODO Auto-generated method stub
-        return null;
+
+        try{
+            return jdbc.queryForObject(GET_USER_BY_ID, of("id", id), new UserRowMapper());
+        }
+        catch(EmptyResultDataAccessException e ){
+            log.error(e.getMessage());
+            throw new ApiException(e.getMessage());
+        }
+        catch(Exception e ){
+            log.error(e.getMessage());
+            throw new ApiException("An error occurred");
+        }
     }
 
     @Override
@@ -114,6 +125,22 @@ public class UserRepoImpl implements UserRepository<User> , UserDetailsService {
                 .addValue("lastName", user.getLastName())
                 .addValue("email", user.getEmail())
                 .addValue("password", new BCryptPasswordEncoder().encode(user.getPassword()));
+
+
+    }
+
+    private SqlParameterSource getUserDetailsSqlParameterSource(UpdateForm user) {
+
+        return new MapSqlParameterSource()
+                .addValue("id", user.getId())
+                .addValue("firstName", user.getFirstName())
+                .addValue("lastName", user.getLastName())
+                .addValue("phone", user.getPhone())
+                .addValue("address", user.getAddress())
+                .addValue("enabled", user.getEnabled())
+                .addValue("email", user.getEmail())
+                .addValue("title", user.getTitle())
+                .addValue("bio", user.getBio());
 
 
     }
@@ -273,6 +300,19 @@ public class UserRepoImpl implements UserRepository<User> , UserDetailsService {
            log.error(e.getMessage());
            throw new ApiException("An error occurred. Please try again");
        }
+    }
+
+    @Override
+    public User updateUserDetails(UpdateForm user) {
+        try{
+             jdbc.update(UPDATE_USER_DETAILS_QUERY, getUserDetailsSqlParameterSource(user));
+             return get(user.getId());
+        }
+        catch (EmptyResultDataAccessException e){
+            log.error(e.getMessage());
+            throw new ApiException("This link has expired. Please reset your password again");
+        }
+
     }
 
     private boolean isResetURLDeleted(String key, String type) {

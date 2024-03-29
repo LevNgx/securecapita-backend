@@ -2,6 +2,7 @@ package com.fullstackprojectbackend.securecapita.repository;
 
 import com.fullstackprojectbackend.securecapita.domain.User;
 import com.fullstackprojectbackend.securecapita.dto.UserDTO;
+import com.fullstackprojectbackend.securecapita.form.UpdateForm;
 
 import java.util.Collection;
 
@@ -27,4 +28,6 @@ public interface UserRepository <T extends User>{
     void renewPassword(String key, String password, String confirmPassword);
 
     T verifyAccountKey(String key);
+
+    T updateUserDetails(UpdateForm user);
 }

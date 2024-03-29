@@ -5,10 +5,12 @@ import com.fullstackprojectbackend.securecapita.domain.User;
 import com.fullstackprojectbackend.securecapita.domain.UserPrincipal;
 import com.fullstackprojectbackend.securecapita.dto.UserDTO;
 import com.fullstackprojectbackend.securecapita.form.LoginForm;
+import com.fullstackprojectbackend.securecapita.form.UpdateForm;
 import com.fullstackprojectbackend.securecapita.provider.TokenProvider;
 import com.fullstackprojectbackend.securecapita.exception.ApiException;
 import com.fullstackprojectbackend.securecapita.service.RoleService;
 import com.fullstackprojectbackend.securecapita.service.UserService;
+import com.fullstackprojectbackend.securecapita.utils.UserUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -23,6 +25,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import java.awt.*;
 import java.net.URI;
 import java.util.Map;
 
@@ -47,18 +50,14 @@ public class UserResource {
 
     @PostMapping("/login")
     public ResponseEntity<HttpResponse> login(@RequestBody @Valid LoginForm loginForm) {
-        try{
+
             System.out.println(loginForm.getEmail() + " " + loginForm.getPassword());
             Authentication authentication = authentication(loginForm.getEmail(),loginForm.getPassword());
-            UserDTO userDto = getAuthenticatedUser(authentication);
+            UserDTO userDto = UserUtils.getLoggedInUser(authentication);
             System.out.println("user DTO" + userDto);
             return userDto.getMfaEnabled() ? sendVerificationCode(userDto) : sendResponse(userDto);
 
-        }
-        catch (Exception e){
-            log.error(e.getMessage());
-            throw new ApiException(e.getMessage());
-        }
+
 
     }
 
@@ -73,7 +72,7 @@ public class UserResource {
             return authentication;
         }
         catch (Exception e){
-            processError(httpServletRequest, httpServletResponse, e);
+//            processError(httpServletRequest, httpServletResponse, e);
             throw new ApiException(e.getMessage());
         }
     }
@@ -82,12 +81,27 @@ public class UserResource {
 
     @GetMapping("/profile")
     public ResponseEntity<HttpResponse> profile(Authentication authentication){
+        UserDTO userDTO = userService.getUserByEmail(UserUtils.getAuthenticatedUser(authentication).getEmail());
 
         return ResponseEntity.created(getUri()).body(
                 HttpResponse.builder()
                         .timeStamp(now().toString())
                         .data(of("user",authentication.getPrincipal()))
                         .message("profile opened")
+                        .status(HttpStatus.CREATED)
+                        .statusCode(HttpStatus.CREATED.value())
+                        .build());
+    }
+
+    @GetMapping("/update")
+    public ResponseEntity<HttpResponse> updateUser(@RequestBody @Valid UpdateForm user){
+        UserDTO updatedUser = userService.updateUserDetails(user);
+
+        return ResponseEntity.created(getUri()).body(
+                HttpResponse.builder()
+                        .timeStamp(now().toString())
+                        .data(of("user", updatedUser))
+                        .message("User updated")
                         .status(HttpStatus.CREATED)
                         .statusCode(HttpStatus.CREATED.value())
                         .build());
