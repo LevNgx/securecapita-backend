@@ -10,7 +10,7 @@ public class UserDTO {
     private Long id;
     private String firstName;
     private String lastName;
-    private int phone;
+    private String phone;
     private String address;
     private String email;
     private Boolean enabled;
@@ -20,4 +20,6 @@ public class UserDTO {
     private String imageUrl;
     private String title;
     private String bio;
+    private String roleName;
+    private String permissions;
 }
