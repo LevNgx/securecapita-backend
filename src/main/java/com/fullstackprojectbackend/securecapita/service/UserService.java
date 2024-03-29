@@ -2,6 +2,7 @@ package com.fullstackprojectbackend.securecapita.service;
 
 import com.fullstackprojectbackend.securecapita.domain.User;
 import com.fullstackprojectbackend.securecapita.dto.UserDTO;
+import com.fullstackprojectbackend.securecapita.form.UpdateForm;
 
 public interface UserService {
     UserDTO createUser(User user);
@@ -21,4 +22,6 @@ public interface UserService {
     void renewPassword(String key, String password, String confirmPassword);
 
     UserDTO verifyAccountKey(String key);
+
+    UserDTO updateUserDetails(UpdateForm user);
 }

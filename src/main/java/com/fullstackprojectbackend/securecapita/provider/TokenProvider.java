@@ -36,7 +36,7 @@ public class TokenProvider {
     private static final String LEVIATHAN_X_LLC = "LEVIATHAN_X_LLC";
     private static final String CUSTOMER_MANAGEMENT_SERVICE = "CUSTOMER_MANAGEMENT_SERVICE";
     private static final String AUTHORITIES = "Authorities" ;
-    private static final long ACCESS_TOKEN_EXPIRATION_TIME = 1_800_000;
+    private static final long ACCESS_TOKEN_EXPIRATION_TIME = 1_800_0000;
     private static final long REFRESH_TOKEN_EXPIRATION_TIME = 432_000_000;
     private final UserService userService;
     @Value("${jwt.secret}")
