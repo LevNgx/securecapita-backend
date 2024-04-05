@@ -35,7 +35,7 @@ public class UserServiceImpl implements UserService {
     }
 
     private UserDTO mapToUserDTO(User user) {
-        return fromUser(user, roleRepository.getRoleByUserId(user.getId()));
+        return UserDTOMapper.fromUserAndRole(user, roleRepository.getRoleByUserId(user.getId()));
     }
 
 

@@ -27,4 +27,13 @@ public class UserDTOMapper {
         return userDTO;
     }
 
+    public static UserDTO fromUserAndRole(User user, Role role){
+        UserDTO userDTO = new UserDTO();
+        BeanUtils.copyProperties(user, userDTO);
+        userDTO.setRoleName(role.getName());
+        userDTO.setPermissions(role.getPermissions());
+        return userDTO;
+    }
+
+
 }

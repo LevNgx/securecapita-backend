@@ -29,5 +29,5 @@ public interface UserRepository <T extends User>{
 
     T verifyAccountKey(String key);
 
-    T updateUserDetails(UpdateForm user);
+    User updateUserDetails(UpdateForm user);
 }
