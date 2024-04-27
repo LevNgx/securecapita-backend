@@ -39,15 +39,14 @@ public class CustomAuthorizationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         try{
-            Map<String, String> values = getRequestValues(request);
-            log.info("came here" + "1");
+//            Map<String, String> values = getRequestValues(request);
+//            String token = getToken(request)
+            Long userID = getUserId(request);
             String token = getToken(request);
-            log.info("came here" + "2");
-            if(tokenProvider.isTokenValid(values.get(EMAIL_KEY), token)){
-                log.info("came here" + "3" + values + "gap " );
-                List<GrantedAuthority> authorities = tokenProvider.getAuthorities(values.get(TOKEN_KEY));
+            if(tokenProvider.isTokenValid(userID, token)){
+                List<GrantedAuthority> authorities = tokenProvider.getAuthorities(token);
                 log.info(authorities.toString() + "came here" + "4");
-                Authentication authentication = tokenProvider.getAuthentication(values.get(EMAIL_KEY), authorities, request);
+                Authentication authentication = tokenProvider.getAuthentication(userID, authorities, request);
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
             else {
@@ -74,8 +73,13 @@ public class CustomAuthorizationFilter extends OncePerRequestFilter {
 
     }
 
-    private Map<String, String> getRequestValues(HttpServletRequest request) {
-        return Map.of(EMAIL_KEY, tokenProvider.getSubject(getToken(request), request), TOKEN_KEY, getToken(request));
+//    private Map<String, String> getRequestValues(HttpServletRequest request) {
+//        return Map.of(EMAIL_KEY, tokenProvider.getSubject(getToken(request), request), TOKEN_KEY, getToken(request));
+//
+//    }
+
+    private Long getUserId(HttpServletRequest request) {
+        return tokenProvider.getSubject(getToken(request), request);
 
     }
 

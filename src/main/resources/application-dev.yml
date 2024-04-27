@@ -25,5 +25,5 @@ spring:
   sql:
     init:
 #      mode: always
-      c  ontinue-on-error: false
+      continue-on-error: false
   

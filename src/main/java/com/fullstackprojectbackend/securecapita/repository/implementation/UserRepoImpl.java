@@ -24,16 +24,22 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Repository;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 import static com.fullstackprojectbackend.securecapita.enumeration.RoleType.ROLE_USER;
 import static com.fullstackprojectbackend.securecapita.enumeration.VerificationType.ACCOUNT;
 import static com.fullstackprojectbackend.securecapita.enumeration.VerificationType.PASSWORD;
 import static com.fullstackprojectbackend.securecapita.query.UserQuery.*;
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import static java.util.Map.of;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
+import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.time.DateUtils.addDays;
 
 
@@ -146,12 +152,7 @@ public class UserRepoImpl implements UserRepository<User> , UserDetailsService {
     }
 
     // we should not expose back end url to the front end. we need to send only the front end urls to the user. returning backend url for now
-    private String getVerificationURL(String key, String type) {
 
-        return ServletUriComponentsBuilder.fromCurrentContextPath().path("/user/verify/" + type + "/" + key).toUriString();
-
-
-    }
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
@@ -315,6 +316,102 @@ public class UserRepoImpl implements UserRepository<User> , UserDetailsService {
 
     }
 
+    @Override
+    public void updatePassword(Long id, String currentPassword, String newPassword, String confirmNewPassword) {
+       if(!newPassword.equals(confirmNewPassword))
+            throw new ApiException("New password and confirm new password does not match");
+       User user = get(id);
+       if(new BCryptPasswordEncoder().matches(currentPassword, user.getPassword())){
+           try{
+                jdbc.update(UPDATE_USER_PASSWORD_BY_UPDATE_QUERY, of("password", new BCryptPasswordEncoder().encode(newPassword), "id",id));
+           }
+           catch (Exception e){
+               log.error(e.getMessage());
+               throw new ApiException("An error occurred");
+           }
+       }
+       else{
+           throw new ApiException("Current password is incorrect");
+       }
+
+    }
+
+    @Override
+    public void updateAccountSettings(Long id, Boolean enabled, Boolean notLocked) {
+        try {
+             jdbc.update(UPDATE_USER_SETTINGS_QUERY, of("userId", id, "enabled", enabled, "notLocked",notLocked));
+        }
+        catch (Exception e){
+            log.error(e.getMessage());
+            throw new ApiException("An error occurred");
+        }
+    }
+
+    @Override
+    public User toggleMfa(String email) {
+       User user = getUserByEmail(email);
+       if(isBlank(user.getPhone())) throw new ApiException("phone number is required for MFA authentication");
+       user.setMfaEnabled((!user.getMfaEnabled()));
+        try {
+             jdbc.update(TOGGLE_USER_MFA_QUERY, of("email", email, "isUsingMfa", user.getMfaEnabled()));
+             return user;
+        }
+        catch (Exception e){
+            log.error(e.getMessage());
+            throw new ApiException("Unable to toggle MFA Authentication");
+        }
+    }
+
+    @Override
+    public void updateImage(UserDTO userDTO, MultipartFile image) {
+        String imageUrl = setUserImageUrl(userDTO.getEmail());
+        userDTO.setImageUrl(imageUrl);
+        saveImage(userDTO.getEmail(), image);
+        jdbc.update(UPDATE_USER_IMAGE_QUERY, of("imageUrl", imageUrl, "id", userDTO.getId()));
+    }
+
+    private void saveImage(String email, MultipartFile image) {
+        Path fileStorageLocation = Paths.get(System.getProperty("user.home") + "/Downloads/images/").toAbsolutePath().normalize();
+        if(!Files.exists(fileStorageLocation)) {
+            try {
+                Files.createDirectories(fileStorageLocation);
+            }
+            catch(Exception e ){
+                log.error(e.getMessage());
+                throw new ApiException(("Image file is not stored"));
+            }
+        }
+
+        log.info("Created directory " + fileStorageLocation);
+        try{
+            Files.copy(image.getInputStream(), fileStorageLocation.resolve(email + ".png"), REPLACE_EXISTING);
+        }
+        catch (Exception e){
+            log.error(e.getMessage());
+            throw new ApiException("Image file is not copied ");
+        }
+
+    }
+
+    private String setUserImageUrl(String email) {
+        return ServletUriComponentsBuilder.fromCurrentContextPath().path("/user/image/" + email + ".png").toUriString();
+    }
+
+
+//    @Override
+//    public User getUserById(Long userId) {
+//        try{
+//            User user = jdbc.queryForObject(GET_USER_BY_ID)
+//        }
+//        catch(EmptyResultDataAccessException e){
+//            log.error(e.getMessage());
+//            throw new ApiException("no user found with the given Id");
+//        }
+//        catch( Exception e){
+//            throw new ApiException("An error occurred");
+//        }
+//    }
+
     private boolean isResetURLDeleted(String key, String type) {
         String urlKey = getVerificationURL(key, type);
         Integer count = jdbc.queryForObject(FETCH_VERIFICATION_URL_COUNT_QUERY, of("url", urlKey), Integer.class);
@@ -347,5 +444,13 @@ public class UserRepoImpl implements UserRepository<User> , UserDetailsService {
             log.error(e.getMessage());
             throw new ApiException("An error occurred");
         }
+    }
+
+
+    private String getVerificationURL(String key, String type) {
+
+        return ServletUriComponentsBuilder.fromCurrentContextPath().path("/user/verify/" + type + "/" + key).toUriString();
+
+
     }
 }

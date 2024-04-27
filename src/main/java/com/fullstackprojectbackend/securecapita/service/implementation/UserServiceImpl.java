@@ -9,6 +9,7 @@ import com.fullstackprojectbackend.securecapita.repository.UserRepository;
 import com.fullstackprojectbackend.securecapita.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import static com.fullstackprojectbackend.securecapita.dtomapper.UserDTOMapper.fromUser;
 
@@ -35,7 +36,7 @@ public class UserServiceImpl implements UserService {
     }
 
     private UserDTO mapToUserDTO(User user) {
-        return UserDTOMapper.fromUserAndRole(user, roleRepository.getRoleByUserId(user.getId()));
+        return UserDTOMapper.fromUser(user, roleRepository.getRoleByUserId(user.getId()));
     }
 
 
@@ -73,5 +74,35 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDTO updateUserDetails(UpdateForm user) {
         return mapToUserDTO(userRepository.updateUserDetails(user));
+    }
+
+    @Override
+    public UserDTO getUserById(Long userId) {
+        return mapToUserDTO(userRepository.get(userId));
+    }
+
+    @Override
+    public void updatePassword(Long id, String currentPassword, String newPassword, String confirmNewPassword) {
+        userRepository.updatePassword(id, currentPassword, newPassword, confirmNewPassword);
+    }
+
+    @Override
+    public void updateUserRole(Long id, String roleName) {
+        roleRepository.updateUserRole(id, roleName);
+    }
+
+    @Override
+    public void updateAccountSettings(Long id, Boolean enabled, Boolean notLocked) {
+        userRepository.updateAccountSettings( id,  enabled,  notLocked);
+    }
+
+    @Override
+    public UserDTO toggleMfa(String email) {
+        return mapToUserDTO(userRepository.toggleMfa( email));
+    }
+
+    @Override
+    public void updateImage(UserDTO userDTO, MultipartFile image) {
+        userRepository.updateImage(userDTO, image);
     }
 }

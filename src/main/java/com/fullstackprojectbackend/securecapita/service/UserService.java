@@ -3,6 +3,7 @@ package com.fullstackprojectbackend.securecapita.service;
 import com.fullstackprojectbackend.securecapita.domain.User;
 import com.fullstackprojectbackend.securecapita.dto.UserDTO;
 import com.fullstackprojectbackend.securecapita.form.UpdateForm;
+import org.springframework.web.multipart.MultipartFile;
 
 public interface UserService {
     UserDTO createUser(User user);
@@ -24,4 +25,16 @@ public interface UserService {
     UserDTO verifyAccountKey(String key);
 
     UserDTO updateUserDetails(UpdateForm user);
+
+    UserDTO getUserById(Long uerId);
+
+    void updatePassword(Long id, String currentPassword, String newPassword, String confirmNewPassword);
+
+    void updateUserRole(Long id, String roleName);
+
+    void updateAccountSettings(Long id, Boolean enabled, Boolean notLocked);
+
+    UserDTO toggleMfa(String email);
+
+    void updateImage(UserDTO userDTO, MultipartFile image);
 }
